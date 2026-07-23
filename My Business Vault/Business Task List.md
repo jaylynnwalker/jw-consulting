@@ -7,10 +7,12 @@ kanban-plugin: board
 ## To-Do
 
 - [ ] Update component card names in component library. Give each type of card it's own id so styling can be adjusted accordingly.
+- [ ] Apply for LLC
 
 
 ## Complete
 
+- [ ] Buy domain name
 
 
 ## Revisit

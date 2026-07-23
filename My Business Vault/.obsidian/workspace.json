@@ -83,14 +83,20 @@
             "id": "d4f60a8b8efbf200",
             "type": "leaf",
             "state": {
-              "type": "markdown",
+              "type": "kanban",
               "state": {
-                "file": "Milestones.md",
-                "mode": "source",
-                "source": false
+                "file": "Business Task List.md",
+                "kanbanViewState": {
+                  "kanban-plugin": "board",
+                  "list-collapse": [
+                    false,
+                    false,
+                    false
+                  ]
+                }
               },
-              "icon": "lucide-file",
-              "title": "Milestones"
+              "icon": "lucide-trello",
+              "title": "Business Task List"
             }
           }
         ],
@@ -259,16 +265,16 @@
   },
   "active": "d4f60a8b8efbf200",
   "lastOpenFiles": [
+    "09 Resources/Untitled.md",
+    "Business Task List.md",
+    "Milestones.md",
     "Untitled.md",
     "Future Topics to Revisit.md",
     "Untitled Kanban.md",
-    "Business Task List.md",
-    "Milestones.md",
     "06 Finance/06.05 Startup Costs.md",
     "07 Operations/07.09 Work-Life Balance.md",
     "07 Operations/07.05 Client Management.md",
     "07 Operations/07.04 Time Management.md",
-    "09 Resources/Untitled.md",
     "05 Marketing/05.05 Content Strategy.md",
     "05 Marketing/05.04 Website Strategy.md",
     "05 Marketing/05.03 Messaging Framework.md",
