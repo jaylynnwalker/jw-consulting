@@ -1,0 +1,11 @@
+:root {
+  --ink: #111111;
+  --ink-soft: #333333;
+  --accent: #8a8a8a;
+  --background: #f7f7f7;
+  --surface: #ffffff;
+  --muted: #686868;
+  --line: #dedede;
+  --soft: #f1f1f1;
+  --radius: 16px;
+}
