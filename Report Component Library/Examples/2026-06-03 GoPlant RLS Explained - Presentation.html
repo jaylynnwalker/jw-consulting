@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GoPlant RLS — Explained</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Spline+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F6F2EA;
+  --paper-2:#EFE9DD;
+  --ink:#191C22;
+  --muted:#5C6472;
+  --navy:#16365F;
+  --navy-2:#1E4E86;
+  --accent:#C2761F;
+  --accent-soft:#E7A24A;
+  --good:#1F7A4D;
+  --bad:#B23A2C;
+  --line:rgba(25,28,34,.14);
+  --line-strong:rgba(25,28,34,.28);
+  --shadow:0 18px 50px -20px rgba(22,54,95,.45);
+  --display:"Fraunces",Georgia,serif;
+  --body:"Spline Sans",-apple-system,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--body);
+  background:var(--paper);
+  color:var(--ink);
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+/* paper grain + faint blueprint grid */
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(rgba(22,54,95,.035) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(22,54,95,.035) 1px,transparent 1px);
+  background-size:34px 34px;
+  mask-image:radial-gradient(circle at 50% 40%,#000 0%,transparent 78%);
+}
+.deck{position:relative;height:100vh;width:100vw;z-index:1}
+.slide{
+  position:absolute;inset:0;
+  display:none;
+  padding:clamp(36px,6vw,96px);
+  flex-direction:column;
+  justify-content:center;
+  opacity:0;
+}
+.slide.active{display:flex;animation:slideIn .5s cubic-bezier(.2,.7,.2,1) forwards}
+@keyframes slideIn{from{opacity:0}to{opacity:1}}
+.slide.active .reveal{opacity:0;transform:translateY(14px);animation:rise .6s cubic-bezier(.2,.7,.2,1) forwards}
+.slide.active .reveal:nth-child(1){animation-delay:.05s}
+.slide.active .reveal:nth-child(2){animation-delay:.14s}
+.slide.active .reveal:nth-child(3){animation-delay:.23s}
+.slide.active .reveal:nth-child(4){animation-delay:.32s}
+.slide.active .reveal:nth-child(5){animation-delay:.41s}
+.slide.active .reveal:nth-child(6){animation-delay:.50s}
+.slide.active .reveal:nth-child(7){animation-delay:.59s}
+@keyframes rise{to{opacity:1;transform:none}}
+
+.kicker{
+  font-family:var(--mono);
+  font-size:.74rem;letter-spacing:.28em;text-transform:uppercase;
+  color:var(--accent);font-weight:500;margin-bottom:1.1rem;
+  display:flex;align-items:center;gap:.8rem;
+}
+.kicker::before{content:"";width:34px;height:2px;background:var(--accent)}
+h1{font-family:var(--display);font-weight:600;line-height:1.02;letter-spacing:-.02em;
+  font-size:clamp(2.6rem,6.6vw,5.6rem);color:var(--navy)}
+h2{font-family:var(--display);font-weight:600;line-height:1.05;letter-spacing:-.015em;
+  font-size:clamp(1.9rem,4.2vw,3.3rem);color:var(--navy);margin-bottom:1.4rem;max-width:18ch}
+h2 em{font-style:italic;color:var(--accent)}
+.lead{font-size:clamp(1.05rem,1.7vw,1.4rem);line-height:1.5;color:var(--muted);max-width:46ch}
+p{line-height:1.55}
+.mono{font-family:var(--mono)}
+strong{color:var(--ink);font-weight:600}
+.good{color:var(--good);font-weight:600}
+.bad{color:var(--bad);font-weight:600}
+.navy{color:var(--navy)}
+
+/* layout helpers */
+.row{display:flex;gap:clamp(1.5rem,4vw,4rem);align-items:center}
+.col{display:flex;flex-direction:column;gap:1.1rem}
+.grow{flex:1}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:clamp(1.2rem,3vw,2.6rem);align-items:stretch}
+
+/* cards */
+.card{background:rgba(255,255,255,.55);border:1px solid var(--line);border-radius:14px;
+  padding:1.5rem 1.7rem;backdrop-filter:blur(2px)}
+.card.bad{border-color:rgba(178,58,44,.4);background:rgba(178,58,44,.05)}
+.card.good{border-color:rgba(31,122,77,.4);background:rgba(31,122,77,.06)}
+.card h3{font-family:var(--body);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);font-weight:600;margin-bottom:.7rem}
+.card .big{font-family:var(--display);font-size:clamp(2.4rem,5vw,3.6rem);line-height:1;font-weight:600}
+.card p{font-size:.98rem;color:var(--muted);margin-top:.5rem}
+
+/* stat headline */
+.stat-duo{display:flex;align-items:center;gap:clamp(1.5rem,5vw,4.5rem);flex-wrap:wrap}
+.stat{display:flex;flex-direction:column}
+.stat .num{font-family:var(--display);font-weight:700;line-height:.9;
+  font-size:clamp(3.6rem,11vw,8.5rem);letter-spacing:-.03em}
+.stat .lbl{font-family:var(--mono);font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:.6rem}
+.arrow{font-family:var(--display);font-size:clamp(2rem,5vw,3.5rem);color:var(--accent)}
+
+/* code block */
+pre{font-family:var(--mono);font-size:clamp(.72rem,1.05vw,.95rem);line-height:1.65;
+  background:#12243f;color:#dfe7f2;border-radius:12px;padding:1.3rem 1.5rem;overflow:auto;
+  box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.06)}
+pre .c{color:#7fa6c9;font-style:italic}
+pre .k{color:#e7a24a}
+pre .f{color:#9ad0a3}
+pre .s{color:#d8b48a}
+
+/* list */
+ul.clean{list-style:none;display:flex;flex-direction:column;gap:.9rem;max-width:54ch}
+ul.clean li{position:relative;padding-left:1.7rem;line-height:1.5;font-size:1.05rem}
+ul.clean li::before{content:"";position:absolute;left:0;top:.58em;width:8px;height:8px;
+  background:var(--accent);border-radius:2px;transform:rotate(45deg)}
+
+/* tree diagram */
+.tree{display:flex;flex-direction:column;align-items:center;gap:0;font-family:var(--mono)}
+.node{background:#fff;border:1.5px solid var(--navy);color:var(--navy);border-radius:10px;
+  padding:.6rem 1rem;font-weight:500;font-size:.92rem;box-shadow:0 6px 16px -8px rgba(22,54,95,.4);white-space:nowrap}
+.node.leaf{border-color:var(--accent);color:var(--accent);border-style:solid}
+.node.tag{font-size:.7rem;color:var(--muted);border:none;background:none;box-shadow:none;padding:.2rem}
+.connector{width:2px;height:26px;background:var(--line-strong)}
+.fork{display:flex;gap:clamp(2rem,8vw,5rem);position:relative}
+.fork::before{content:"";position:absolute;top:-14px;left:12%;right:12%;height:2px;background:var(--line-strong)}
+.branch{display:flex;flex-direction:column;align-items:center}
+.branch .connector{height:14px}
+
+/* truth table */
+table.tt{border-collapse:collapse;font-size:1rem;width:100%;max-width:760px}
+table.tt th,table.tt td{border:1px solid var(--line);padding:.85rem 1rem;text-align:left}
+table.tt th{font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);font-weight:600;background:rgba(22,54,95,.05)}
+table.tt td.yes{color:var(--good);font-weight:700;text-align:center}
+table.tt td.no{color:var(--bad);font-weight:700;text-align:center}
+table.tt tr.win td{background:rgba(31,122,77,.08)}
+.result{font-weight:600}
+
+.pill{display:inline-block;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;
+  text-transform:uppercase;padding:.3rem .7rem;border-radius:999px;border:1px solid var(--line-strong);color:var(--muted)}
+.pill.nec{color:var(--bad);border-color:rgba(178,58,44,.5);background:rgba(178,58,44,.07)}
+.pill.nice{color:var(--navy);border-color:rgba(22,54,95,.4);background:rgba(22,54,95,.06)}
+
+.note{font-size:.92rem;color:var(--muted);border-left:3px solid var(--accent);padding-left:1rem;max-width:60ch;line-height:1.5}
+
+/* chrome */
+.chrome{position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;align-items:center;
+  justify-content:space-between;padding:.9rem clamp(36px,6vw,96px);font-family:var(--mono);
+  font-size:.72rem;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+.progress{position:fixed;top:0;left:0;height:3px;background:var(--accent);z-index:6;transition:width .4s ease}
+.brandmark{display:flex;align-items:center;gap:.6rem;font-weight:600;color:var(--navy)}
+.brandmark .dot{width:9px;height:9px;border-radius:50%;background:var(--accent)}
+.nav-hint{opacity:.7}
+.counter span{color:var(--ink);font-weight:700}
+.footnote{position:absolute;bottom:clamp(56px,8vh,88px);font-size:.8rem;color:var(--muted);font-style:italic;max-width:62ch}
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+  <!-- 1 — TITLE -->
+  <section class="slide active">
+    <div class="kicker reveal">GoPlant · Row-Level Security</div>
+    <h1 class="reveal">Showing each user<br>only <em style="font-style:italic;color:var(--accent)">their</em> plant.</h1>
+    <p class="lead reveal" style="margin-top:1.6rem">How GoPlant's row-level security works, why the original design fought the engine, and the cleaner approach we landed on.</p>
+    <p class="reveal mono" style="margin-top:2.4rem;font-size:.78rem;letter-spacing:.16em;color:var(--muted);text-transform:uppercase">P3 Adaptive × Kuraray America · June 3, 2026</p>
+  </section>
+
+  <!-- 2 — THE GOAL -->
+  <section class="slide">
+    <div class="kicker reveal">The goal</div>
+    <h2 class="reveal">One sentence, then everything follows from it</h2>
+    <p class="lead reveal" style="color:var(--ink);font-size:clamp(1.3rem,2.4vw,2rem);max-width:30ch;margin-bottom:2rem">"You should only see data for the plants you're assigned to."</p>
+    <div class="row reveal" style="gap:2rem;flex-wrap:wrap">
+      <div class="card grow"><h3>The mapping</h3><div class="navy mono" style="font-size:1.3rem;font-weight:600">RLS</div><p>SharePoint list: which user → which plant.</p></div>
+      <div class="card grow"><h3>The dimensions</h3><div class="navy mono" style="font-size:1.3rem;font-weight:600">DimAsset · DimTask …</div><p>The things people slice by.</p></div>
+      <div class="card grow"><h3>The facts</h3><div class="navy mono" style="font-size:1.3rem;font-weight:600">Responses · Alerts …</div><p>The numbers on the report.</p></div>
+    </div>
+  </section>
+
+  <!-- 3 — THE TREE -->
+  <section class="slide">
+    <div class="kicker reveal">The shape of the data</div>
+    <div class="row" style="gap:clamp(2rem,6vw,5rem);align-items:center">
+      <div class="col reveal" style="flex:0 0 auto">
+        <div class="tree">
+          <div class="node">La&nbsp;Porte&nbsp;(51)</div>
+          <div class="node tag">top-level · the plant</div>
+          <div class="connector"></div>
+          <div class="node">Area&nbsp;(85)</div>
+          <div class="connector"></div>
+          <div class="fork">
+            <div class="branch"><div class="connector"></div><div class="node leaf">Northside&nbsp;(86)</div></div>
+            <div class="branch"><div class="connector"></div><div class="node leaf">Southside&nbsp;(87)</div></div>
+          </div>
+          <div class="node tag" style="margin-top:.6rem;color:var(--accent)">leaves · assets live here</div>
+        </div>
+      </div>
+      <div class="col grow reveal" style="gap:1.3rem">
+        <h2 style="margin-bottom:.3rem">Storage groups form a <em>tree</em></h2>
+        <ul class="clean">
+          <li><strong>Parent</strong> — one step up. Relative to where you are; changes at every level.</li>
+          <li><strong class="navy">Level1</strong> — the top of the branch (the plant). Same for everything beneath it, no matter how deep.</li>
+          <li><strong class="bad">Leaf</strong> — the bottom. Where assets, tasks and checklists are actually tagged.</li>
+        </ul>
+        <p class="note"><strong>30 of 92</strong> groups sit 3+ levels deep — so "parent" and "Level1" are genuinely different things here.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 — THE MISMATCH -->
+  <section class="slide">
+    <div class="kicker reveal">The core mismatch</div>
+    <h2 class="reveal">Access is granted at the <em>top</em>.<br>Data is tagged at the <em>bottom</em>.</h2>
+    <div class="two reveal" style="margin-top:1rem">
+      <div class="card"><h3>Users are mapped to</h3><div class="big navy">Plants</div><p>Jonas → La Porte (one top-level ID: 51).</p></div>
+      <div class="card"><h3>Assets are tagged to</h3><div class="big" style="color:var(--accent)">Leaf groups</div><p>A Plant, Northside, Southside … (IDs like 68, 86, 87).</p></div>
+    </div>
+    <p class="lead reveal" style="margin-top:1.8rem;max-width:60ch">So "give Jonas La Porte" has to <strong>fan downward</strong> from one top node to every leaf beneath it. Every wrong version of this got that fan-out wrong.</p>
+  </section>
+
+  <!-- 5 — THE OLD DESIGN -->
+  <section class="slide">
+    <div class="kicker reveal">What was there before</div>
+    <h2 class="reveal">A security table wired to <em>every</em> dimension</h2>
+    <div class="row reveal" style="gap:3rem;flex-wrap:wrap;align-items:flex-start">
+      <ul class="clean grow">
+        <li>One <span class="mono">RLS</span> table, copied <strong>6 times</strong> (<span class="mono">RLS (2)…(7)</span>).</li>
+        <li>Each copy joined to a dimension with an <strong>active, bi-directional</strong> security relationship.</li>
+        <li>The copies existed only to dodge the <em>ambiguity errors</em> you hit when one table fans out to many.</li>
+      </ul>
+      <div class="card grow" style="max-width:34ch">
+        <h3>The instinct was right</h3>
+        <p style="font-size:1.02rem;color:var(--ink)">They'd correctly realised <strong>every dimension needs the filter to reach it.</strong> The goal was sound — the mechanism was the problem.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 — WHY IT BROKE (the killer stat) -->
+  <section class="slide">
+    <div class="kicker reveal">Why it broke — exhibit A</div>
+    <h2 class="reveal" style="max-width:24ch">A relationship matches <em>equal keys</em> — it can't say "is underneath"</h2>
+    <div class="stat-duo reveal" style="margin:1rem 0 1.5rem">
+      <div class="stat"><span class="num bad">1</span><span class="lbl">asset Jonas saw<br>(parent key → leaf key)</span></div>
+      <div class="arrow">→</div>
+      <div class="stat"><span class="num good">363</span><span class="lbl">assets he should see<br>(resolved through Level1)</span></div>
+    </div>
+    <p class="lead reveal" style="max-width:62ch">The mapping holds <strong>parent</strong> IDs (51); assets hold <strong>leaf</strong> IDs (68, 86…). Joining one to the other matches almost nothing — so the design quietly hid <strong>362 of 363</strong> assets.</p>
+  </section>
+
+  <!-- 7 — THE PRINCIPLE -->
+  <section class="slide">
+    <div class="kicker reveal">The principle that fixes everything</div>
+    <h2 class="reveal">RLS rides <em>relationships</em>,<br>not table references</h2>
+    <ul class="clean reveal">
+      <li>A filter on a secured dimension flows <strong>downhill</strong> to the facts related to it — automatically.</li>
+      <li>It does <strong>not</strong> chain through one rule <em>mentioning</em> another table. Inside a rule, other tables are read <strong>unfiltered</strong>.</li>
+      <li>So each dimension must resolve the user <strong>itself</strong> — and facts need no rule at all.</li>
+    </ul>
+    <p class="note reveal" style="margin-top:1.6rem">This is why the first re-write still leaked: the rules <em>referenced</em> each other and assumed the filter carried over. It didn't — every user saw <span class="bad mono">87</span> of 92 groups instead of <span class="good mono">8</span>.</p>
+  </section>
+
+  <!-- 8 — WHY ONE RULE ISN'T ENOUGH -->
+  <section class="slide">
+    <div class="kicker reveal">Why we secure every dimension</div>
+    <h2 class="reveal" style="max-width:22ch">Some facts never touch the storage-group dimension</h2>
+    <div class="row reveal" style="gap:3rem;align-items:center;flex-wrap:wrap">
+      <div class="stat-duo">
+        <div class="stat"><span class="num bad">2,936</span><span class="lbl">Round Completion rows<br>if unsecured</span></div>
+        <div class="arrow">→</div>
+        <div class="stat"><span class="num good">88</span><span class="lbl">Jonas should see</span></div>
+      </div>
+      <p class="lead grow" style="max-width:34ch"><span class="mono">Round Completion</span> has <strong>no relationship</strong> to <span class="mono">DimStorageGroup</span> — it only hangs off <span class="mono">DimTask</span>, <span class="mono">DimRound</span>… Securing those dimensions is the <em>only</em> thing that reaches it.</p>
+    </div>
+    <p class="note reveal" style="margin-top:1.4rem">Securing dimensions isn't slicer tidiness — it's how the filter reaches facts that don't connect to storage groups directly.</p>
+  </section>
+
+  <!-- 9 — THE FIX -->
+  <section class="slide">
+    <div class="kicker reveal">The fix</div>
+    <h2 class="reveal">One self-contained rule per dimension</h2>
+    <pre class="reveal"><span class="c">// Step 1 — the plants this user is granted (top-level / Level1 IDs)</span>
+<span class="k">VAR</span> UserParentSGs =
+    <span class="f">SELECTCOLUMNS</span>( <span class="f">FILTER</span>( RLS, RLS[UPN] = <span class="f">USERPRINCIPALNAME</span>() ), <span class="s">"SG ID"</span>, RLS[SG ID] )
+<span class="c">// Step 2 — expand each plant to every group beneath it, via Level1</span>
+<span class="k">VAR</span> UserGroups =
+    <span class="f">SELECTCOLUMNS</span>( <span class="f">FILTER</span>( DimStorageGroup,
+        DimStorageGroup[Level1StorageGroup_ID] <span class="k">IN</span> UserParentSGs ), <span class="s">"StorageGroup_ID"</span>, DimStorageGroup[StorageGroup_ID] )
+<span class="k">RETURN</span>
+    [StorageGroup_ID] <span class="k">IN</span> UserGroups   <span class="c">// keep the row if its group is in the set</span></pre>
+    <p class="note reveal" style="margin-top:1.3rem">No duplicate tables. No bi-directional relationships. Each rule resolves <span class="mono">USERPRINCIPALNAME()</span> on its own and keys on <strong>Level1</strong>, so it captures the whole branch at any depth.</p>
+  </section>
+
+  <!-- 10 — RESULTS -->
+  <section class="slide">
+    <div class="kicker reveal">The result</div>
+    <h2 class="reveal">Correct, and far simpler</h2>
+    <div class="two reveal">
+      <div class="card good"><h3>Jonas — La Porte</h3><div class="big good">8&nbsp;/&nbsp;363</div><p>storage groups / assets — including the leaves two levels down.</p></div>
+      <div class="card good"><h3>James — Washington Works</h3><div class="big good">14</div><p>storage groups (0 assets — that site is checksheet-based, not asset-tagged).</p></div>
+    </div>
+    <p class="lead reveal" style="margin-top:1.6rem"><span class="bad" style="text-decoration:line-through">7 tables + 7 bi-directional relationships</span> &nbsp;→&nbsp; <strong class="good">7 DAX rules, no extra tables, no bi-directional cross-filter.</strong></p>
+  </section>
+
+  <!-- 11 — HOW TO TEST -->
+  <section class="slide">
+    <div class="kicker reveal">How to test it</div>
+    <h2 class="reveal">"View As" needs <em>both</em> boxes — here's why</h2>
+    <div class="row reveal" style="gap:2.5rem;align-items:flex-start;flex-wrap:wrap">
+      <table class="tt grow">
+        <tr><th>Other user</th><th>User Access role</th><th>You see</th><th>Why</th></tr>
+        <tr><td class="no">✕</td><td class="no">✕</td><td class="result">Everything</td><td>No role = no security applied</td></tr>
+        <tr><td class="yes">✓</td><td class="no">✕</td><td class="result">Everything</td><td>Identity set, but no rule reads it</td></tr>
+        <tr><td class="no">✕</td><td class="yes">✓</td><td class="result">Nothing</td><td>Rule runs as <em>you</em> — not in the mapping</td></tr>
+        <tr class="win"><td class="yes">✓</td><td class="yes">✓</td><td class="result good">Jonas's 8 / 363</td><td>Security on <em>and</em> identity = Jonas</td></tr>
+      </table>
+    </div>
+    <p class="note reveal" style="margin-top:1.4rem"><strong>Role</strong> = the switch (turn security on). <strong>Other user</strong> = the identity (<span class="mono">USERPRINCIPALNAME()</span>). Dynamic RLS needs both — a static role would need only the switch.</p>
+  </section>
+
+  <!-- 12 — LOOSE ENDS -->
+  <section class="slide">
+    <div class="kicker reveal">Two things to verify on your side</div>
+    <h2 class="reveal">Data to confirm, not model to fix</h2>
+    <div class="two reveal">
+      <div class="card"><h3>Blank mappings</h3><p style="color:var(--ink)">A few users have a blank storage-group mapping. They correctly see <strong>nothing</strong> — RLS fails <span class="good">safely closed</span>. Worth checking whether they're <em>meant</em> to have access.</p></div>
+      <div class="card"><h3>Trimmed sample</h3><p style="color:var(--ink)">This file was shrunk to travel by email. Every <strong>count</strong> here is illustrative — confirm against the full model. The <em>logic</em> holds regardless.</p></div>
+    </div>
+  </section>
+
+  <!-- 13 — RECOMMENDATIONS -->
+  <section class="slide">
+    <div class="kicker reveal">Where to go next</div>
+    <h2 class="reveal">Tiered honestly</h2>
+    <div class="col reveal" style="gap:1.1rem;max-width:70ch">
+      <div class="card good"><span class="pill" style="color:var(--good);border-color:rgba(31,122,77,.5);background:rgba(31,122,77,.08)">Done</span><p style="margin-top:.7rem;color:var(--ink)">RLS rewritten to self-contained, commented DAX. Validated &amp; version-controlled.</p></div>
+      <div class="card"><span class="pill nec">Verify</span><p style="margin-top:.7rem;color:var(--ink)">Confirm the blank-mapping users in the full dataset.</p></div>
+      <div class="card"><span class="pill nice">Nicety — if you're in there anyway</span><p style="margin-top:.7rem;color:var(--ink)">Carry <span class="mono">Level1StorageGroup_ID</span> on each dimension (SQL view) → every rule collapses to one line. Pairs naturally with the timezone / query-folding work.</p></div>
+    </div>
+  </section>
+
+  <!-- 14 — CLOSE -->
+  <section class="slide">
+    <div class="kicker reveal">The one thing to remember</div>
+    <h1 class="reveal" style="font-size:clamp(2.2rem,5vw,4.4rem);max-width:20ch">Filters travel through <em>relationships</em>.</h1>
+    <p class="lead reveal" style="margin-top:1.6rem;max-width:58ch">Secure each dimension on a path to your data, resolve the hierarchy with <span class="mono navy">Level1</span>, and let the facts follow. No duplicate tables, no bi-directional cross-filter — just rules that match the shape of the tree.</p>
+    <p class="reveal mono" style="margin-top:2.4rem;font-size:.78rem;letter-spacing:.16em;color:var(--muted);text-transform:uppercase">Questions → let's open the model and walk it live.</p>
+  </section>
+
+</div>
+
+<div class="chrome">
+  <div class="brandmark"><span class="dot"></span> GoPlant RLS</div>
+  <div class="nav-hint">← → or Space to navigate</div>
+  <div class="counter"><span id="cur">1</span> / <span id="tot">14</span></div>
+</div>
+
+<script>
+const slides=[...document.querySelectorAll('.slide')];
+let i=0;const tot=slides.length;
+document.getElementById('tot').textContent=tot;
+function show(n){
+  i=Math.max(0,Math.min(tot-1,n));
+  slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+  document.getElementById('cur').textContent=i+1;
+  document.getElementById('progress').style.width=((i+1)/tot*100)+'%';
+}
+function next(){show(i+1)}function prev(){show(i-1)}
+document.addEventListener('keydown',e=>{
+  if(['ArrowRight','ArrowDown',' ','PageDown'].includes(e.key)){e.preventDefault();next()}
+  else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();prev()}
+  else if(e.key==='Home'){show(0)}else if(e.key==='End'){show(tot-1)}
+});
+document.addEventListener('click',e=>{if(e.clientX < window.innerWidth*0.22){prev()}else{next()}});
+show(0);
+</script>
+</body>
+</html>

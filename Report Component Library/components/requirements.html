@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+  <head>
+    <link rel="stylesheet" href="../css/variables.css" />
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/components.css" />
+  </head>
+
+  <body>
+    <div class="container">
+      <span class="section-label"> Requirements </span>
+
+      <button
+        class="copy-button"
+        data-copy="requirements"
+        onclick="copyHTML('requirements')"
+      >
+        Copy HTML
+      </button>
+
+      <div id="requirements" class="component-preview">
+        <h2>Business Requirements</h2>
+
+        <!-- New Requirement Line----------------------------------------------------- -->
+        <div class="component-card">
+          <h3>REQ-001</h3>
+
+          <p>The solution shall provide real-time operational visibility.</p>
+        </div>
+
+        <!-- New Requirement Line----------------------------------------------------- -->
+        <div class="component-card">
+          <h3>REQ-002</h3>
+
+          <p>Users shall be able to generate performance reports.</p>
+        </div>
+
+        <!-- New Requirement Line----------------------------------------------------- -->
+      </div>
+    </div>
+
+    <script src="../js/library.js"></script>
+  </body>
+</html>

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GoPlant Time Zones — Explained</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Spline+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F6F2EA;--paper-2:#EFE9DD;--ink:#191C22;--muted:#5C6472;
+  --navy:#16365F;--navy-2:#1E4E86;--accent:#C2761F;--accent-soft:#E7A24A;
+  --good:#1F7A4D;--bad:#B23A2C;--line:rgba(25,28,34,.14);--line-strong:rgba(25,28,34,.28);
+  --shadow:0 18px 50px -20px rgba(22,54,95,.45);
+  --display:"Fraunces",Georgia,serif;--body:"Spline Sans",-apple-system,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--body);background:var(--paper);color:var(--ink);overflow:hidden;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(22,54,95,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(22,54,95,.035) 1px,transparent 1px);
+  background-size:34px 34px;mask-image:radial-gradient(circle at 50% 40%,#000 0%,transparent 78%)}
+.deck{position:relative;height:100vh;width:100vw;z-index:1}
+.slide{position:absolute;inset:0;display:none;padding:clamp(36px,6vw,96px);flex-direction:column;justify-content:center;opacity:0}
+.slide.active{display:flex;animation:slideIn .5s cubic-bezier(.2,.7,.2,1) forwards}
+@keyframes slideIn{from{opacity:0}to{opacity:1}}
+.slide.active .reveal{opacity:0;transform:translateY(14px);animation:rise .6s cubic-bezier(.2,.7,.2,1) forwards}
+.slide.active .reveal:nth-child(1){animation-delay:.05s}.slide.active .reveal:nth-child(2){animation-delay:.14s}
+.slide.active .reveal:nth-child(3){animation-delay:.23s}.slide.active .reveal:nth-child(4){animation-delay:.32s}
+.slide.active .reveal:nth-child(5){animation-delay:.41s}.slide.active .reveal:nth-child(6){animation-delay:.50s}
+.slide.active .reveal:nth-child(7){animation-delay:.59s}
+@keyframes rise{to{opacity:1;transform:none}}
+.kicker{font-family:var(--mono);font-size:.74rem;letter-spacing:.28em;text-transform:uppercase;color:var(--accent);font-weight:500;margin-bottom:1.1rem;display:flex;align-items:center;gap:.8rem}
+.kicker::before{content:"";width:34px;height:2px;background:var(--accent)}
+h1{font-family:var(--display);font-weight:600;line-height:1.02;letter-spacing:-.02em;font-size:clamp(2.6rem,6.6vw,5.6rem);color:var(--navy)}
+h2{font-family:var(--display);font-weight:600;line-height:1.05;letter-spacing:-.015em;font-size:clamp(1.9rem,4.2vw,3.3rem);color:var(--navy);margin-bottom:1.4rem;max-width:20ch}
+h2 em,h1 em{font-style:italic;color:var(--accent)}
+.lead{font-size:clamp(1.05rem,1.7vw,1.4rem);line-height:1.5;color:var(--muted);max-width:48ch}
+p{line-height:1.55}.mono{font-family:var(--mono)}strong{color:var(--ink);font-weight:600}
+.good{color:var(--good);font-weight:600}.bad{color:var(--bad);font-weight:600}.navy{color:var(--navy)}
+.row{display:flex;gap:clamp(1.5rem,4vw,4rem);align-items:center}
+.col{display:flex;flex-direction:column;gap:1.1rem}.grow{flex:1}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:clamp(1.2rem,3vw,2.6rem);align-items:stretch}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:clamp(1rem,2vw,1.6rem);align-items:stretch}
+.card{background:rgba(255,255,255,.55);border:1px solid var(--line);border-radius:14px;padding:1.5rem 1.7rem;backdrop-filter:blur(2px)}
+.card.bad{border-color:rgba(178,58,44,.4);background:rgba(178,58,44,.05)}
+.card.good{border-color:rgba(31,122,77,.4);background:rgba(31,122,77,.06)}
+.card.hi{border-color:rgba(194,118,31,.5);background:rgba(194,118,31,.06)}
+.card h3{font-family:var(--body);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:.7rem}
+.card .big{font-family:var(--display);font-size:clamp(2.2rem,4.6vw,3.4rem);line-height:1;font-weight:600}
+.card p{font-size:.97rem;color:var(--muted);margin-top:.5rem;line-height:1.5}
+.stat-duo{display:flex;align-items:center;gap:clamp(1.5rem,5vw,4.5rem);flex-wrap:wrap}
+.stat{display:flex;flex-direction:column}
+.stat .num{font-family:var(--display);font-weight:700;line-height:.9;font-size:clamp(3rem,9vw,7rem);letter-spacing:-.03em}
+.stat .lbl{font-family:var(--mono);font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:.6rem;max-width:18ch}
+.arrow{font-family:var(--display);font-size:clamp(2rem,5vw,3.5rem);color:var(--accent)}
+pre{font-family:var(--mono);font-size:clamp(.72rem,1.02vw,.92rem);line-height:1.6;background:#12243f;color:#dfe7f2;border-radius:12px;padding:1.2rem 1.4rem;overflow:auto;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.06)}
+pre.bad{box-shadow:0 18px 50px -20px rgba(178,58,44,.5);border-color:rgba(178,58,44,.3)}
+pre .c{color:#7fa6c9;font-style:italic}pre .k{color:#e7a24a}pre .f{color:#9ad0a3}pre .s{color:#d8b48a}pre .x{color:#e8897c}
+ul.clean{list-style:none;display:flex;flex-direction:column;gap:.85rem;max-width:56ch}
+ul.clean li{position:relative;padding-left:1.7rem;line-height:1.5;font-size:1.04rem}
+ul.clean li::before{content:"";position:absolute;left:0;top:.55em;width:8px;height:8px;background:var(--accent);border-radius:2px;transform:rotate(45deg)}
+.flow{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;font-family:var(--mono)}
+.step{background:#fff;border:1.5px solid var(--navy);color:var(--navy);border-radius:10px;padding:.7rem 1.1rem;font-weight:500;font-size:.9rem;box-shadow:0 6px 16px -8px rgba(22,54,95,.4);text-align:center}
+.step.anchor{border-color:var(--accent);color:var(--accent);border-width:2px}
+.step small{display:block;color:var(--muted);font-size:.7rem;margin-top:.25rem;font-weight:400}
+.flowarrow{color:var(--accent);font-size:1.3rem;font-weight:700}
+table.tt{border-collapse:collapse;font-size:.98rem;width:100%}
+table.tt th,table.tt td{border:1px solid var(--line);padding:.8rem .95rem;text-align:left;vertical-align:top}
+table.tt th{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;background:rgba(22,54,95,.05)}
+table.tt tr.win td{background:rgba(31,122,77,.08)}
+table.tt td .opt{font-weight:700;color:var(--navy)}
+.note{font-size:.92rem;color:var(--muted);border-left:3px solid var(--accent);padding-left:1rem;max-width:64ch;line-height:1.5}
+.pill{display:inline-block;font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;padding:.28rem .65rem;border-radius:999px;border:1px solid var(--line-strong);color:var(--muted);font-weight:500}
+.pill.best{color:var(--good);border-color:rgba(31,122,77,.5);background:rgba(31,122,77,.08)}
+.pill.hard{color:var(--bad);border-color:rgba(178,58,44,.5);background:rgba(178,58,44,.07)}
+.chrome{position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:.9rem clamp(36px,6vw,96px);font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+.progress{position:fixed;top:0;left:0;height:3px;background:var(--accent);z-index:6;transition:width .4s ease}
+.brandmark{display:flex;align-items:center;gap:.6rem;font-weight:600;color:var(--navy)}
+.brandmark .dot{width:9px;height:9px;border-radius:50%;background:var(--accent)}
+.counter span{color:var(--ink);font-weight:700}
+.quote{font-family:var(--display);font-style:italic;font-size:clamp(1.3rem,2.6vw,2.1rem);line-height:1.35;color:var(--navy);max-width:24ch}
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+  <!-- 1 TITLE -->
+  <section class="slide active">
+    <div class="kicker reveal">GoPlant · Time Zones</div>
+    <h1 class="reveal">Getting <em>local time</em><br>right.</h1>
+    <p class="lead reveal" style="margin-top:1.6rem">Converting UTC to local time the optimal way — and the one decision that determines how you should do it.</p>
+    <p class="reveal mono" style="margin-top:2.4rem;font-size:.78rem;letter-spacing:.16em;color:var(--muted);text-transform:uppercase">P3 Adaptive × Kuraray America · June 3, 2026</p>
+  </section>
+
+  <!-- 2 WHAT YOU ASKED -->
+  <section class="slide">
+    <div class="kicker reveal">What you asked</div>
+    <blockquote class="quote reveal">"How we should implement the adjustments for the current user's time zones … the recommended, most optimal way."</blockquote>
+    <p class="lead reveal" style="margin-top:1.6rem;max-width:54ch">Good news up front: the <strong>foundation you reached for is the right one.</strong> The fixes are in the mechanics — and there's one bug worth catching before it spreads.</p>
+  </section>
+
+  <!-- 3 THE PRINCIPLE -->
+  <section class="slide">
+    <div class="kicker reveal">The principle everything hangs on</div>
+    <h2 class="reveal">Store the instant in <em>UTC</em>. Convert to local only to display.</h2>
+    <div class="flow reveal" style="margin:.5rem 0 1.5rem">
+      <div class="step anchor">UTC<small>the anchor — one truth</small></div>
+      <span class="flowarrow">→</span>
+      <div class="step">+ zone metadata<small>where it happened</small></div>
+      <span class="flowarrow">→</span>
+      <div class="step">Local<small>for display only</small></div>
+    </div>
+    <p class="lead reveal" style="max-width:60ch">UTC has no daylight saving, no gaps, no "this clock time happened twice." Local times are just <em>presentations</em> of that anchor. Store local as your truth and you've thrown away which offset was in effect.</p>
+  </section>
+
+  <!-- 4 YOU ALREADY DO THIS -->
+  <section class="slide">
+    <div class="kicker reveal">The good news</div>
+    <h2 class="reveal">You're already doing the hard part</h2>
+    <div class="two reveal">
+      <div class="card good"><h3>UTC anchor</h3><div class="big good mono" style="font-size:clamp(1.4rem,2.6vw,2rem)">AnsweredOnUTC</div><p>Source timestamps are kept as UTC.</p></div>
+      <div class="card good"><h3>Zone metadata per record</h3><div class="big good mono" style="font-size:clamp(1.4rem,2.6vw,2rem)">TimeZone</div><p>Each row carries the plant's zone, joined to an offset.</p></div>
+    </div>
+    <p class="lead reveal" style="margin-top:1.6rem;max-width:62ch">UTC anchor + per-record zone → convert outward. That's textbook. The architecture is sound — only the <strong>final conversion step</strong> is broken.</p>
+  </section>
+
+  <!-- 5 THE BUG -->
+  <section class="slide">
+    <div class="kicker reveal">The bug to catch — exhibit A</div>
+    <h2 class="reveal" style="max-width:24ch">The conversion shifts <em>days</em>, not hours</h2>
+    <div class="row reveal" style="gap:2.5rem;align-items:flex-start;flex-wrap:wrap">
+      <pre class="bad grow"><span class="c">// what the M does today</span>
+<span class="f">Date.AddDays</span>( [AnsweredOnUTC], [UtfOffsetHours] )
+<span class="c">// UtfOffsetHours = -5  →  AddDays treats it as -5 DAYS</span>
+
+UTC      2026-06-03 12:00
+result  <span class="x">2026-05-29</span> 12:00   <span class="c">// 5 days early</span>
+should   2026-06-03 07:00   <span class="c">// 5 hours earlier</span></pre>
+      <div class="col" style="flex:0 0 auto">
+        <div class="stat"><span class="num bad">5–6</span><span class="lbl">days every date is shifted back</span></div>
+      </div>
+    </div>
+    <p class="note reveal" style="margin-top:1.2rem"><strong>6 tables, ~13 date columns.</strong> In <span class="mono">FactResponses</span> alone, <strong>2,883</strong> rows are wrong (offsets −6 and −5) <span style="opacity:.7">— counts from the trimmed sample</span>. Every "completed this week", deadline and trend is off by a week.</p>
+  </section>
+
+  <!-- 6 PBI WON'T SAVE YOU -->
+  <section class="slide">
+    <div class="kicker reveal">A common assumption to clear up</div>
+    <h2 class="reveal">Power BI does <em>not</em> localize timestamps for you</h2>
+    <ul class="clean reveal">
+      <li>A stored datetime shows <strong>as-is to everyone</strong> — Houston, Tokyo, same value. Only the <em>format</em> follows the viewer's locale, never the instant.</li>
+      <li>Power Query runs <strong>once, at refresh</strong>, on the gateway/Service (UTC) — not per viewer. It has no idea who'll open the report.</li>
+      <li>So conversion is a <strong>real task you build deliberately</strong>. Do nothing and everyone just sees raw UTC.</li>
+    </ul>
+    <p class="note reveal" style="margin-top:1.4rem">You're not reinventing a platform feature — UTC→local genuinely has to be done somewhere on purpose.</p>
+  </section>
+
+  <!-- 7 THE FORK -->
+  <section class="slide">
+    <div class="kicker reveal">The one decision that drives everything</div>
+    <h2 class="reveal">Whose time zone — the <em>place</em>, or the <em>person</em>?</h2>
+    <div class="two reveal" style="margin-top:.4rem">
+      <div class="card hi"><h3>The place</h3><p style="color:var(--ink);font-size:1.05rem">The <strong>plant where the reading was logged.</strong> A property of the record — finite, known, already on every row. Everyone sees the same timestamp for an inspection.</p></div>
+      <div class="card"><h3>The person</h3><p style="color:var(--ink);font-size:1.05rem">The <strong>location of whoever opens the report.</strong> Different for every viewer — and unknowable at refresh time.</p></div>
+    </div>
+    <p class="lead reveal" style="margin-top:1.5rem;max-width:62ch">Pick this first. Everything — the method, the effort, even whether it's possible — follows from it.</p>
+  </section>
+
+  <!-- 8 THE OPTIONS -->
+  <section class="slide">
+    <div class="kicker reveal">Your three options</div>
+    <h2 class="reveal" style="margin-bottom:1rem">What you can offer, and the cost</h2>
+    <table class="tt reveal">
+      <tr><th>Option</th><th>Everyone sees…</th><th>Effort</th><th>Best when</th></tr>
+      <tr class="win"><td><span class="opt">A · Plant-local</span> <span class="pill best">recommended</span></td><td>each reading in the <strong>plant's</strong> local time</td><td>Low — convert per record by its zone</td><td>Operational / audit reporting <em>(this is GoPlant)</em></td></tr>
+      <tr><td><span class="opt">B · UTC everywhere</span></td><td>UTC, clearly labelled</td><td>Lowest — just label it</td><td>You want zero ambiguity and a single timeline</td></tr>
+      <tr><td><span class="opt">C · Viewer-local</span> <span class="pill hard">hard</span></td><td>their <strong>own</strong> local time</td><td>High — not native; needs a zone picker + DAX</td><td>Rarely worth it; breaks a shared audit trail</td></tr>
+    </table>
+    <p class="note reveal" style="margin-top:1.3rem">Option C can't be done at refresh (SQL or PQ) at all — the data is baked once for everyone. It'd require a viewer-selected zone parameter. For inspection records, <strong>Option A is almost certainly what you want.</strong></p>
+  </section>
+
+  <!-- 9 DST -->
+  <section class="slide">
+    <div class="kicker reveal">Daylight saving — don't hand-code it</div>
+    <h2 class="reveal">A fixed offset can't know the season. A named zone can.</h2>
+    <div class="two reveal">
+      <div class="card bad"><h3>Fixed offset (today)</h3><div class="mono navy" style="font-size:1.1rem;margin:.3rem 0">UtfOffsetHours = −6</div><p>Can't tell CST (−6) from CDT (−5). <strong class="bad">Wrong half the year.</strong> The −5 / −6 split you already have hints at this.</p></div>
+      <div class="card good"><h3>Named zone (SQL)</h3><div class="mono navy" style="font-size:1.05rem;margin:.3rem 0">AT TIME ZONE<br>'Central Standard Time'</div><p>The engine reads the OS zone database and flips CST↔CDT by date. Japan = no DST, handled automatically. <strong class="good">You encode nothing.</strong></p></div>
+    </div>
+    <p class="note reveal" style="margin-top:1.3rem">You never maintain DST rules — you just name the zone. That's the whole reason named zones beat a stored number.</p>
+  </section>
+
+  <!-- 10 PLACE NOT PERSON -->
+  <section class="slide">
+    <div class="kicker reveal">Why "global company" doesn't complicate it</div>
+    <h2 class="reveal">You convert for the <em>place</em>, not the person</h2>
+    <div class="row reveal" style="gap:3rem;flex-wrap:wrap;align-items:center">
+      <div class="stat"><span class="num navy">~a dozen</span><span class="lbl">plant zones to support</span></div>
+      <p class="lead grow" style="max-width:36ch">Not the whole world — just the zones your <strong>sites</strong> sit in (Central, Eastern, Tokyo…). That list already lives on each record as <span class="mono">TimeZone</span>.</p>
+    </div>
+    <p class="note reveal" style="margin-top:1.5rem">Two people — one in Houston, one in Tokyo — both see a La&nbsp;Porte inspection at the same La&nbsp;Porte local time. The <strong>viewer's</strong> location never enters the maths, so a scattered, worldwide workforce doesn't complicate it at all.</p>
+  </section>
+
+  <!-- 11 WHERE TO FIX -->
+  <section class="slide">
+    <div class="kicker reveal">Where to do the conversion</div>
+    <h2 class="reveal">Two homes — one is clearly better</h2>
+    <div class="two reveal">
+      <div class="col">
+        <span class="pill best">Best — in SQL</span>
+        <pre class="grow"><span class="c">-- in Responses_Flat_v, DST-correct</span>
+Response_Date
+  <span class="k">AT TIME ZONE</span> <span class="s">'UTC'</span>
+  <span class="k">AT TIME ZONE</span> <span class="s">'Central Standard Time'</span></pre>
+        <p class="note" style="border-color:var(--good)">Handles DST · also fixes the broken query folding (refresh speed) · one place.</p>
+      </div>
+      <div class="col">
+        <span class="pill">Quick fix — Power Query</span>
+        <pre class="grow"><span class="c">// correct units, no DB change</span>
+[AnsweredOnUTC]
+  + <span class="f">#duration</span>(0, [UtfOffsetHours], 0, 0)</pre>
+        <p class="note">Fixes the day-shift immediately — but uses the fixed offset, so still no DST. Good as an interim.</p>
+        <p style="font-size:.8rem;color:var(--muted);margin-top:.7rem;line-height:1.45;font-style:italic">Carrying timezone-<em>aware</em> values instead? <span class="mono" style="font-style:normal;font-size:.92em">DateTimeZone.SwitchZone(DateTime.AddZone([…UTC],&nbsp;0),&nbsp;[offset])</span> — same accuracy, more explicit zone intent.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12 VERIFY FIRST -->
+  <section class="slide">
+    <div class="kicker reveal">Step 0 — before trusting any of it</div>
+    <h2 class="reveal">Is the source <em>actually</em> UTC?</h2>
+    <p class="lead reveal" style="max-width:58ch">The model assumes it — but that assumption lives only in a column <strong>rename</strong> (<span class="mono">Response_Date → AnsweredOnUTC</span>). That's the previous developer asserting it, not proof.</p>
+    <div class="two reveal" style="margin-top:1.4rem">
+      <div class="card good"><h3>If it's UTC</h3><p style="color:var(--ink)">Convert outward once to plant-local. Fix the units / move to SQL. Done.</p></div>
+      <div class="card bad"><h3>If it's already local</h3><p style="color:var(--ink)">Applying an offset is <strong>double-converting</strong> — wrong no matter how you fix the formula. Use it as-is, or convert local→UTC first.</p></div>
+    </div>
+    <p class="note reveal" style="margin-top:1.3rem">Confirm with whoever owns the GoPlant database. Everything downstream depends on this one answer.</p>
+  </section>
+
+  <!-- 13 RECOMMENDATION -->
+  <section class="slide">
+    <div class="kicker reveal">The path</div>
+    <h2 class="reveal">If we had to recommend</h2>
+    <ul class="clean reveal" style="max-width:64ch">
+      <li><strong>1 · Confirm</strong> the source is UTC (step 0).</li>
+      <li><strong>2 · Decide</strong> the requirement — almost certainly <span class="good">Option A, plant-local</span>.</li>
+      <li><strong>3 · Convert in SQL</strong> with <span class="mono">AT TIME ZONE</span> named zones → DST handled, folding restored.</li>
+      <li><strong>4 · Interim</strong>: if SQL access lags, the Power Query <span class="mono">#duration</span> fix stops the day-shift bleeding today.</li>
+    </ul>
+    <p class="note reveal" style="margin-top:1.4rem">The hard part — anchoring in UTC with zone metadata — you've already done. This is finishing the last mile correctly.</p>
+  </section>
+
+  <!-- 14 CLOSE -->
+  <section class="slide">
+    <div class="kicker reveal">The one thing to remember</div>
+    <h1 class="reveal" style="font-size:clamp(2.2rem,5vw,4.4rem);max-width:18ch">Convert for the <em>place</em>, anchor in <em>UTC</em>.</h1>
+    <p class="lead reveal" style="margin-top:1.6rem;max-width:60ch">Keep the truth in UTC, convert each record to its plant's zone with a named zone so DST takes care of itself, and never make the answer depend on who's looking. Fix the day-shift first — then move the conversion to SQL when you can.</p>
+    <p class="reveal mono" style="margin-top:2.4rem;font-size:.78rem;letter-spacing:.16em;color:var(--muted);text-transform:uppercase">First question for the team → is <span style="color:var(--accent)">Response_Date</span> really UTC?</p>
+  </section>
+
+</div>
+
+<div class="chrome">
+  <div class="brandmark"><span class="dot"></span> GoPlant Time Zones</div>
+  <div>← → or Space to navigate</div>
+  <div class="counter"><span id="cur">1</span> / <span id="tot">14</span></div>
+</div>
+
+<script>
+const slides=[...document.querySelectorAll('.slide')];let i=0;const tot=slides.length;
+document.getElementById('tot').textContent=tot;
+function show(n){i=Math.max(0,Math.min(tot-1,n));slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+  document.getElementById('cur').textContent=i+1;document.getElementById('progress').style.width=((i+1)/tot*100)+'%';}
+function next(){show(i+1)}function prev(){show(i-1)}
+document.addEventListener('keydown',e=>{
+  if(['ArrowRight','ArrowDown',' ','PageDown'].includes(e.key)){e.preventDefault();next()}
+  else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();prev()}
+  else if(e.key==='Home'){show(0)}else if(e.key==='End'){show(tot-1)}});
+document.addEventListener('click',e=>{if(e.clientX<window.innerWidth*0.22){prev()}else{next()}});
+show(0);
+</script>
+</body>
+</html>

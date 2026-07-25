@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+  <head>
+    <link rel="stylesheet" href="../css/variables.css" />
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/components.css" />
+  </head>
+
+  <body>
+    <div class="container">
+      <span class="section-label"> Decision Log </span>
+
+      <button
+        class="copy-button"
+        data-copy="decision-log"
+        onclick="copyHTML('decision-log')"
+      >
+        Copy HTML
+      </button>
+
+      <div id="decision-log" class="component-preview">
+        <h2>Project Decisions</h2>
+
+        <table>
+          <tr>
+            <th>Date</th>
+
+            <th>Decision</th>
+
+            <th>Rationale</th>
+
+            <th>Alternatives Considered</th>
+          </tr>
+
+          <tr>
+            <td>01/15/26</td>
+
+            <td>Select reporting platform</td>
+
+            <td>Improves operational visibility</td>
+
+            <td>PowerPoint, Excel, Tableau</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <script src="../js/library.js"></script>
+  </body>
+</html>

@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+  <head>
+    <link rel="stylesheet" href="../css/variables.css" />
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/components.css" />
+  </head>
+
+  <body>
+    <div class="container">
+      <span class="section-label"> Observations </span>
+
+      <button
+        class="copy-button"
+        data-copy="observations"
+        onclick="copyHTML('observations')"
+      >
+        Copy HTML
+      </button>
+
+      <div id="observations" class="component-preview">
+        <h2>Current State Observations</h2>
+
+        <div class="component-card">
+          <h3>OBS-001 | Manual Production Reporting</h3>
+
+          <p>
+            Production supervisors manually consolidate data from multiple
+            sources to create daily performance reports.
+          </p>
+        </div>
+
+        <div class="component-card">
+          <h3>OBS-002 | Limited Process Visibility</h3>
+
+          <p>
+            Operational performance data is available across multiple systems
+            but requires manual review to identify trends and issues.
+          </p>
+        </div>
+
+        <div class="component-card">
+          <h3>OBS-003 | Inconsistent Standard Work</h3>
+
+          <p>
+            Process execution varies between teams due to limited documentation
+            and differing local practices.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script src="../js/library.js"></script>
+  </body>
+</html>

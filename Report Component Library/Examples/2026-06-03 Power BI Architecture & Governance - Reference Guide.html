@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Power BI Architecture & Governance — Reference Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Spline+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F6F2EA;--paper-2:#EFE9DD;--card:#FCFAF5;--ink:#191C22;--muted:#5C6472;
+  --navy:#16365F;--navy-2:#1E4E86;--accent:#C2761F;--accent-soft:#E7A24A;
+  --good:#1F7A4D;--bad:#B23A2C;--line:rgba(25,28,34,.13);--line-strong:rgba(25,28,34,.26);
+  --shadow:0 14px 40px -22px rgba(22,54,95,.5);
+  --display:"Fraunces",Georgia,serif;--body:"Spline Sans",-apple-system,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:96px}
+body{font-family:var(--body);background:var(--paper);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(22,54,95,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(22,54,95,.03) 1px,transparent 1px);background-size:36px 36px;mask-image:radial-gradient(circle at 70% 0%,#000,transparent 70%)}
+.progress{position:fixed;top:0;left:0;height:3px;width:0;background:var(--accent);z-index:60;transition:width .15s}
+
+/* header */
+header{position:sticky;top:0;z-index:50;background:rgba(246,242,234,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:.85rem clamp(1rem,3vw,2.4rem)}
+.hdr-in{display:flex;align-items:center;justify-content:space-between;gap:1rem;max-width:1320px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:.7rem;font-weight:600;color:var(--navy);font-size:1.02rem}
+.brand .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);flex:none}
+.brand small{display:block;font-weight:400;color:var(--muted);font-size:.72rem;letter-spacing:.04em}
+.legend{display:flex;gap:1rem;align-items:center;font-size:.74rem;color:var(--muted);font-family:var(--mono)}
+.legend span{display:flex;align-items:center;gap:.35rem}
+.dotc{width:9px;height:9px;border-radius:50%;background:var(--navy)}.dotj{width:9px;height:9px;background:var(--accent);transform:rotate(45deg)}
+.menu-btn{display:none;background:none;border:1px solid var(--line-strong);border-radius:8px;padding:.4rem .6rem;color:var(--navy);font-size:1.1rem;cursor:pointer}
+
+.layout{display:grid;grid-template-columns:260px minmax(0,1fr);gap:clamp(1.5rem,3vw,3.5rem);max-width:1320px;margin:0 auto;padding:clamp(1.5rem,3vw,3rem) clamp(1rem,3vw,2.4rem) 6rem;position:relative;z-index:1}
+
+/* TOC */
+nav.toc{position:sticky;top:88px;align-self:start;max-height:calc(100vh-110px);overflow-y:auto;font-size:.9rem}
+nav.toc .toc-title{font-family:var(--mono);font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:.8rem}
+nav.toc a{display:block;color:var(--muted);text-decoration:none;padding:.38rem .7rem;border-left:2px solid transparent;border-radius:0 6px 6px 0;transition:all .15s;line-height:1.3}
+nav.toc a:hover{color:var(--navy);background:rgba(22,54,95,.04)}
+nav.toc a.active{color:var(--navy);font-weight:600;border-left-color:var(--accent);background:rgba(194,118,31,.07)}
+nav.toc a .n{font-family:var(--mono);font-size:.78rem;color:var(--accent);margin-right:.5rem}
+
+main{min-width:0}
+.hero{margin-bottom:2.5rem}
+.kicker{font-family:var(--mono);font-size:.72rem;letter-spacing:.24em;text-transform:uppercase;color:var(--accent);font-weight:500;margin-bottom:.9rem;display:flex;align-items:center;gap:.7rem}
+.kicker::before{content:"";width:30px;height:2px;background:var(--accent)}
+h1{font-family:var(--display);font-weight:600;font-size:clamp(2.2rem,4.5vw,3.6rem);line-height:1.04;letter-spacing:-.02em;color:var(--navy)}
+.hero p{color:var(--muted);font-size:1.08rem;max-width:62ch;margin-top:1rem}
+.meta{font-family:var(--mono);font-size:.74rem;color:var(--muted);margin-top:1.2rem;letter-spacing:.04em}
+
+section{scroll-margin-top:90px;padding:2.2rem 0;border-top:1px solid var(--line)}
+section:first-of-type{border-top:none}
+h2{font-family:var(--display);font-weight:600;font-size:clamp(1.5rem,2.6vw,2.1rem);color:var(--navy);letter-spacing:-.01em;line-height:1.1;margin-bottom:.4rem;display:flex;align-items:baseline;gap:.7rem}
+h2 .sn{font-family:var(--mono);font-size:1rem;color:var(--accent);font-weight:700}
+h3{font-family:var(--body);font-weight:600;color:var(--navy);font-size:1.12rem;margin:1.6rem 0 .6rem}
+p{margin:.7rem 0;max-width:70ch}
+em{font-style:italic;color:var(--navy)}
+strong{font-weight:600;color:var(--ink)}
+.mono{font-family:var(--mono);font-size:.92em}
+.good{color:var(--good);font-weight:600}.bad{color:var(--bad);font-weight:600}.navy{color:var(--navy)}
+.lead{font-size:1.12rem;color:var(--muted);max-width:64ch}
+a.ext{color:var(--navy-2);text-decoration:none;border-bottom:1px dotted var(--navy-2)}
+a.ext:hover{color:var(--accent);border-bottom-color:var(--accent)}
+
+.tag{display:inline-block;font-family:var(--mono);font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;padding:.16rem .5rem;border-radius:999px;font-weight:600;vertical-align:middle;margin-left:.4rem}
+.tag.j{color:var(--accent);border:1px solid rgba(194,118,31,.5);background:rgba(194,118,31,.08)}
+.tag.star{color:var(--good);border:1px solid rgba(31,122,77,.5);background:rgba(31,122,77,.09)}
+
+.callout{border-left:3px solid var(--accent);background:var(--card);padding:1rem 1.2rem;border-radius:0 10px 10px 0;margin:1.2rem 0;font-size:.97rem;color:var(--ink);box-shadow:var(--shadow)}
+.callout.warn{border-left-color:var(--bad);background:rgba(178,58,44,.04)}
+.callout.key{border-left-color:var(--good);background:rgba(31,122,77,.05)}
+.callout .lbl{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:.3rem}
+
+table{border-collapse:collapse;width:100%;margin:1.2rem 0;font-size:.94rem;background:var(--card);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
+th,td{border:1px solid var(--line);padding:.7rem .85rem;text-align:left;vertical-align:top}
+th{font-family:var(--mono);font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;background:rgba(22,54,95,.05)}
+tr.star td{background:rgba(31,122,77,.07)}
+td.y{color:var(--good);font-weight:700;text-align:center}td.n{color:var(--bad);font-weight:700;text-align:center}
+.opt{font-weight:700;color:var(--navy)}
+.col-hi{background:rgba(194,118,31,.13)!important;outline:2px solid var(--accent);outline-offset:-2px}
+
+ul.clean{list-style:none;margin:1rem 0;display:flex;flex-direction:column;gap:.6rem}
+ul.clean li{position:relative;padding-left:1.5rem;max-width:70ch}
+ul.clean li::before{content:"";position:absolute;left:0;top:.6em;width:7px;height:7px;background:var(--accent);border-radius:2px;transform:rotate(45deg)}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin:1.2rem 0}
+.cardx{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.2rem 1.3rem;box-shadow:var(--shadow)}
+.cardx.hi{border-color:rgba(194,118,31,.45);background:rgba(194,118,31,.05)}
+.cardx h4{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.6rem}
+.cardx p{font-size:.94rem;margin:.3rem 0}
+
+/* maturity ladder */
+.ladder{display:flex;flex-direction:column;gap:.45rem;margin:1.2rem 0}
+.rung{display:grid;grid-template-columns:3rem 7rem 1fr;gap:.9rem;align-items:center;padding:.6rem .9rem;border-radius:9px;border:1px solid var(--line);background:var(--card);transition:all .2s}
+.rung .lvl{font-family:var(--mono);font-weight:700;color:var(--accent)}
+.rung .nm{font-weight:600;color:var(--navy)}
+.rung .ds{color:var(--muted);font-size:.92rem}
+.rung.target{border-color:var(--accent);background:rgba(194,118,31,.08)}
+.rung.lit{outline:2px solid var(--good);outline-offset:1px;background:rgba(31,122,77,.08)}
+
+/* interactive widgets */
+.widget{background:linear-gradient(180deg,rgba(22,54,95,.04),rgba(194,118,31,.04));border:1px solid var(--line-strong);border-radius:14px;padding:1.4rem 1.5rem;margin:1.4rem 0}
+.widget h4{font-family:var(--body);font-weight:600;color:var(--navy);font-size:1.05rem;margin-bottom:.3rem;display:flex;align-items:center;gap:.5rem}
+.widget .sub{color:var(--muted);font-size:.88rem;margin-bottom:1rem}
+.qrow{display:flex;align-items:flex-start;gap:.7rem;padding:.5rem 0;cursor:pointer;border-bottom:1px dashed var(--line)}
+.qrow:last-of-type{border-bottom:none}
+.qrow input{margin-top:.25rem;width:18px;height:18px;accent-color:var(--accent);cursor:pointer;flex:none}
+.qrow label{cursor:pointer;font-size:.96rem}
+.result{margin-top:1rem;padding:1rem 1.2rem;border-radius:10px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
+.result .rlvl{font-family:var(--display);font-size:1.6rem;font-weight:700;color:var(--navy)}
+.result .rlvl .num{color:var(--accent)}
+.result .rtext{font-size:.95rem;color:var(--muted);margin-top:.4rem}
+
+.tierbtns{display:flex;gap:.6rem;flex-wrap:wrap;margin:1rem 0}
+.tierbtn{font-family:var(--mono);font-size:.84rem;font-weight:600;padding:.55rem 1.1rem;border-radius:999px;border:1.5px solid var(--line-strong);background:var(--card);color:var(--navy);cursor:pointer;transition:all .15s}
+.tierbtn:hover{border-color:var(--accent)}
+.tierbtn.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.tiermsg{margin-top:.8rem;font-size:.95rem;color:var(--ink);min-height:1.2em}
+
+.check li{list-style:none;display:flex;align-items:flex-start;gap:.7rem;padding:.55rem 0;border-bottom:1px dashed var(--line);cursor:pointer;max-width:74ch}
+.check li:last-child{border-bottom:none}
+.check li .box{width:20px;height:20px;border:2px solid var(--line-strong);border-radius:5px;flex:none;margin-top:.15rem;display:flex;align-items:center;justify-content:center;transition:all .15s;font-size:.8rem;color:#fff}
+.check li.done .box{background:var(--good);border-color:var(--good)}
+.check li.done .box::after{content:"✓"}
+.check li.done .txt{color:var(--muted);text-decoration:line-through;text-decoration-color:rgba(92,100,114,.5)}
+.check ul{margin:.3rem 0 0 0}
+
+code{font-family:var(--mono);font-size:.86em;background:rgba(22,54,95,.07);padding:.1rem .35rem;border-radius:4px;color:var(--navy)}
+pre{font-family:var(--mono);font-size:.84rem;line-height:1.6;background:#12243f;color:#dfe7f2;border-radius:10px;padding:1rem 1.2rem;overflow:auto;margin:1rem 0;box-shadow:var(--shadow)}
+.src-list{font-size:.85rem;color:var(--muted);columns:1}
+.src-list div{margin:.4rem 0;padding-left:1.2rem;position:relative}
+.src-list div::before{content:"●";position:absolute;left:0;color:var(--navy);font-size:.6rem;top:.35em}
+footer{max-width:1320px;margin:0 auto;padding:2rem clamp(1rem,3vw,2.4rem) 4rem;border-top:1px solid var(--line);color:var(--muted);font-size:.85rem}
+
+/* judgment highlight mode */
+body.show-j .tag.j{box-shadow:0 0 0 3px rgba(194,118,31,.25)}
+body.show-j [data-j]{background:rgba(194,118,31,.08);border-radius:6px}
+
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr}
+  nav.toc{position:fixed;top:0;left:0;bottom:0;width:280px;background:var(--paper-2);z-index:55;padding:5rem 1.2rem 2rem;transform:translateX(-100%);transition:transform .25s;box-shadow:var(--shadow);max-height:none}
+  nav.toc.open{transform:none}
+  .menu-btn{display:block}
+  .legend{display:none}
+}
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<header>
+  <div class="hdr-in">
+    <button class="menu-btn" id="menuBtn" aria-label="Menu">☰</button>
+    <div class="brand"><span class="dot"></span><div>Power BI Architecture &amp; Governance<small>Reference Guide · Kuraray America · P3 Adaptive</small></div></div>
+    <div class="legend">
+      <span><span class="dotc"></span> Microsoft-cited</span>
+      <span><span class="dotj"></span> P3 judgment</span>
+      <span style="cursor:pointer;border:1px solid var(--line-strong);border-radius:999px;padding:.2rem .6rem" id="jToggle">Highlight judgment</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="toc" id="toc">
+    <div class="toc-title">Contents</div>
+    <a href="#operating-model"><span class="n">1</span>Operating model</a>
+    <a href="#maturity"><span class="n">2</span>Maturity ladder</a>
+    <a href="#by-size"><span class="n">3</span>Architecture by size</a>
+    <a href="#workspaces"><span class="n">4</span>Workspaces &amp; roles</a>
+    <a href="#domains"><span class="n">5</span>Domains (scale)</a>
+    <a href="#licensing"><span class="n">6</span>Licensing &amp; capacity</a>
+    <a href="#coe"><span class="n">7</span>The virtual CoE</a>
+    <a href="#playbook"><span class="n">8</span>Playbook</a>
+    <a href="#sequence"><span class="n">9</span>Sequence for Kuraray</a>
+    <a href="#sources"><span class="n">10</span>Sources</a>
+  </nav>
+
+  <main>
+    <div class="hero">
+      <div class="kicker">Platform administration · Power BI / Fabric</div>
+      <h1>Running the whole estate, scaled to fit each team.</h1>
+      <p>A reference for administering Power BI across <strong>multiple teams and departments of varying size</strong> — the operating model, how it scales, and the concrete conventions to apply. Place any department, from a 3-person team to an enterprise rollout, on a known ladder and govern it consistently.</p>
+      <div class="meta">Prepared by Ramon Carroll, P3 Adaptive · For Jaylynn Walker &amp; Hannah Jensen · 2026-06-03</div>
+    </div>
+
+    <!-- 1 -->
+    <section id="operating-model">
+      <h2><span class="sn">1</span> The operating model</h2>
+      <p class="lead">"Discipline at the core, flexibility at the edge."</p>
+      <p>Microsoft defines <strong>three content-ownership strategies</strong>. The key insight: a healthy organization <strong>runs all three at once</strong> — different departments sit at different points depending on size, skill, and how critical their content is.</p>
+      <table>
+        <tr><th>Strategy</th><th>Who owns what</th><th>Governance</th><th>Fits</th></tr>
+        <tr><td><span class="opt">Business-led self-service</span></td><td>Business unit owns <em>everything</em> (data + reports)</td><td>Lightest</td><td>Personal / small-team, exploration</td></tr>
+        <tr class="star"><td><span class="opt">Managed self-service</span><span class="tag star">recommended</span></td><td><strong>Central team owns data &amp; models; BU owns reports</strong></td><td>Moderate</td><td>Team &amp; departmental BI</td></tr>
+        <tr><td><span class="opt">Enterprise</span></td><td>Central team owns end-to-end</td><td>Most rigorous</td><td>Mission-critical, broad distribution</td></tr>
+      </table>
+      <div class="callout key"><span class="lbl">Recommended default for Kuraray</span><strong>Managed self-service.</strong> You own and certify the shared semantic models (one source of truth); business units build their own thin reports. It's the shape GoPlant already takes — you own the model, consumers get reports — so you're generalizing a pattern you've started, not inventing one.</div>
+      <p><strong>The governance dial = ownership scope × delivery breadth × criticality.</strong> A report one analyst uses needs almost no governance; a model feeding the whole sales org's commission numbers needs a lot. Govern each asset to <em>its</em> stakes — not to a single org-wide rule. <a class="ext" href="https://learn.microsoft.com/en-us/power-bi/guidance/fabric-adoption-roadmap-content-ownership-and-management" target="_blank" rel="noopener">MS: content ownership &amp; management</a></p>
+    </section>
+
+    <!-- 2 -->
+    <section id="maturity">
+      <h2><span class="sn">2</span> The maturity ladder</h2>
+      <p>Microsoft's adoption roadmap aligns to a <strong>5-level Capability Maturity Model</strong>. Use it as a worksheet: rate each department and <strong>track them individually — business units mature at different rates.</strong> Target <strong>level 300–400</strong> where it matters; don't chase 500 everywhere.</p>
+      <div class="ladder" id="ladder">
+        <div class="rung" data-lvl="100"><span class="lvl">100</span><span class="nm">Initial</span><span class="ds">Ad-hoc PBIX, one author, data-in-report, emailed around <em>← the inherited sales suite is likely here</em></span></div>
+        <div class="rung" data-lvl="200"><span class="lvl">200</span><span class="nm">Repeatable</span><span class="ds">Real workspace, some reuse, scheduled refresh, value recognized</span></div>
+        <div class="rung target" data-lvl="300"><span class="lvl">300</span><span class="nm">Defined</span><span class="ds"><strong>Target.</strong> Separated workspaces, shared model, App distribution, documented ownership, dev→prod</span></div>
+        <div class="rung" data-lvl="400"><span class="lvl">400</span><span class="nm">Capable</span><span class="ds">Certified models, deployment pipelines, source control, domains, monitored usage</span></div>
+        <div class="rung" data-lvl="500"><span class="lvl">500</span><span class="nm">Efficient</span><span class="ds">Self-sustaining community, automation, proactive optimization</span></div>
+      </div>
+
+      <div class="widget">
+        <h4>⚙ Rate a department <span class="tag j">interactive</span></h4>
+        <div class="sub">Tick what's true for a department today — it'll light up its rung and the architecture to aim for. (A guide, not a certified assessment.)</div>
+        <div class="qrow"><input type="checkbox" id="q1"><label for="q1">Content lives in a shared <strong>workspace</strong> (not personal/email), with scheduled refresh</label></div>
+        <div class="qrow"><input type="checkbox" id="q2"><label for="q2">The <strong>data is separated from the report</strong> — a shared semantic model, thin reports</label></div>
+        <div class="qrow"><input type="checkbox" id="q3"><label for="q3">Distributed via a <strong>Power BI App</strong>, with least-privilege <strong>security-group roles</strong>, a documented owner, and dev→prod</label></div>
+        <div class="qrow"><input type="checkbox" id="q4"><label for="q4"><strong>Certified</strong> models, <strong>deployment pipelines</strong>, and source control (<code>.pbip</code> + Git)</label></div>
+        <div class="qrow"><input type="checkbox" id="q5"><label for="q5"><strong>Self-sustaining</strong> — automated, monitored usage, proactively optimized</label></div>
+        <div class="result" id="matResult"><div class="rlvl">Level <span class="num">100</span> · Initial</div><div class="rtext">Tick the boxes above to assess.</div></div>
+      </div>
+      <p style="font-size:.8rem;color:var(--muted)"><a class="ext" href="https://learn.microsoft.com/en-us/power-bi/guidance/fabric-adoption-roadmap-maturity-levels" target="_blank" rel="noopener">MS: Fabric adoption roadmap — maturity levels</a></p>
+    </section>
+
+    <!-- 3 -->
+    <section id="by-size">
+      <h2><span class="sn">3</span> Target architecture by department size</h2>
+      <p>The <em>same principles</em> apply at every size — separate model from report, least privilege, one source of truth. What changes is <strong>how much machinery</strong> wraps them. <strong>Scale the ceremony to the stakes.</strong></p>
+      <div class="cards">
+        <div class="cardx"><h4>Small department</h4><p>A few creators, a handful of reports.</p><ul class="clean"><li><strong>2 workspaces</strong> — data + reporting</li><li><strong>Promoted</strong> endorsement</li><li><strong>dev→prod</strong> (manual ok)</li><li>App distribution; <em>ungoverned</em> level</li></ul></div>
+        <div class="cardx"><h4>Large department</h4><p>Many creators, many models/reports, mixed maturity.</p><ul class="clean"><li>Multiple data + reporting workspaces</li><li><strong>Certified</strong> canonical models</li><li><strong>dev/test/prod pipelines</strong>, separate for model vs report</li><li>Security-group roles; Git on <code>.pbip</code>; <em>governed</em></li></ul></div>
+        <div class="cardx hi"><h4>Enterprise-wide</h4><p>Many departments, mixed ownership.</p><ul class="clean"><li><strong>Fabric domains</strong> + delegated admin</li><li>Tenant-settings strategy per security group</li><li>Capacity governance + chargeback</li><li>A Center of Excellence function</li></ul></div>
+      </div>
+      <div class="callout"><span class="lbl">The dividing line</span>The line between these rungs is mostly <strong>licensing</strong> (§6). Pipelines, Fabric Git, domains, certification workflows, and free-viewer distribution are all capacity-gated. Know the tier before promising the architecture.</div>
+    </section>
+
+    <!-- 4 -->
+    <section id="workspaces">
+      <h2><span class="sn">4</span> Workspaces &amp; roles</h2>
+      <p><strong>Separate data workspaces from reporting workspaces.</strong> The foundational move — it decouples data from analytics, limits who can edit the critical/certified models, keeps RLS/OLS enforced for builders and viewers, and removes co-ownership ambiguity.</p>
+      <pre>DATA workspace  ──live connect──▶  REPORTING workspace  ──App──▶  Viewers
+(shared model,                     (thin reports + App,            (read-only)
+ you own)                           business unit owns)</pre>
+      <h3>Roles map directly to least privilege — assign <em>security groups</em>, not people</h3>
+      <table>
+        <tr><th>Role</th><th>Can</th><th>Build on models?</th><th>Use for</th></tr>
+        <tr><td><span class="opt">Admin</span></td><td>Everything incl. manage access, delete</td><td class="y">yes</td><td>The platform team (you)</td></tr>
+        <tr><td><span class="opt">Member</span></td><td>Edit, publish apps, add others</td><td class="y">yes</td><td>Trusted senior creators</td></tr>
+        <tr><td><span class="opt">Contributor</span></td><td>Create / edit content</td><td class="y">yes</td><td>Report / model developers</td></tr>
+        <tr><td><span class="opt">Viewer</span></td><td>Read only</td><td class="n">no</td><td>Consumers entering the workspace</td></tr>
+      </table>
+      <div class="callout warn"><span class="lbl">Build ≠ security</span>Build permission gates who can <em>author</em> on a shared model — but <strong>Read alone still exposes the data.</strong> Build is not a substitute for RLS/OLS. <a class="ext" href="https://learn.microsoft.com/en-us/power-bi/connect-data/service-datasets-build-permissions" target="_blank" rel="noopener">MS: build permission</a></div>
+      <p><strong>Two governance levels, kept simple:</strong> <em>governed</em> vs <em>ungoverned</em>. Governed workspaces carry requirements (domain assignment, certified content, dev/test/prod, security-group roles, active auditing). Classify by four criteria: ownership, delivery scope, data subject area, criticality. <strong>Deploy in one direction only</strong> (dev→test→prod); never hand-publish from a desktop straight to prod. <a class="ext" href="https://learn.microsoft.com/en-us/power-bi/guidance/powerbi-implementation-planning-workspaces-workspace-level-planning" target="_blank" rel="noopener">MS: workspace planning</a></p>
+    </section>
+
+    <!-- 5 -->
+    <section id="domains">
+      <h2><span class="sn">5</span> Domains — organizing at scale (Fabric)</h2>
+      <p>Once you have many workspaces, <strong>Fabric domains</strong> keep it sane. A domain groups all the workspaces for a business area (Sales, Finance, HR…) into a <strong>single management boundary</strong> — a <strong>data-mesh</strong> pattern: distributed ownership, central/federated governance.</p>
+      <ul class="clean">
+        <li><strong>A workspace belongs to exactly one domain</strong>; items inherit it. Domains also drive discovery via the OneLake catalog.</li>
+        <li><strong>Organize four ways</strong> — by subject area (Finance), owning team (Enterprise BI), business unit/segment (a regional division), or project. Pick how the org thinks.</li>
+        <li><strong>Assign</strong> workspaces by name (convention), by admin (security group), or by capacity.</li>
+      </ul>
+      <h3>Three-tier delegated administration</h3>
+      <div class="cards">
+        <div class="cardx"><h4>Fabric admin (you)</h4><p>Create/edit/delete domains; appoint domain admins &amp; contributors.</p></div>
+        <div class="cardx hi"><h4>Domain admin = business owner</h4><p>Manages only their domain; can override delegated tenant settings. Can't delete/rename or change other admins.</p></div>
+        <div class="cardx"><h4>Domain contributor</h4><p>Workspace admin authorized to assign their own workspaces into the domain.</p></div>
+      </div>
+      <div class="callout"><span class="lbl">Why it matters for a 2-person team</span>This is how you hand <strong>day-to-day control to business owners</strong> without losing central governance — "federated governance." <span class="bad">Requires Fabric capacity; the delegable-settings list is limited and partly preview — verify against live docs.</span> <a class="ext" href="https://learn.microsoft.com/en-us/fabric/governance/domains" target="_blank" rel="noopener">MS: Fabric domains</a></div>
+    </section>
+
+    <!-- 6 -->
+    <section id="licensing">
+      <h2><span class="sn">6</span> Licensing &amp; capacity — the master gate</h2>
+      <p><strong>The single biggest fork.</strong> It decides which rungs you can even reach. Pick a tier to see what it unlocks:</p>
+      <div class="tierbtns">
+        <button class="tierbtn on" data-tier="pro">Pro</button>
+        <button class="tierbtn" data-tier="ppu">Premium-Per-User</button>
+        <button class="tierbtn" data-tier="fab">Fabric F-capacity</button>
+      </div>
+      <div class="tiermsg" id="tiermsg"></div>
+      <table id="licTable">
+        <tr><th>Capability</th><th data-col="pro">Pro</th><th data-col="ppu">PPU</th><th data-col="fab">Fabric F-cap</th></tr>
+        <tr><td>Shared models + thin reports</td><td class="y" data-col="pro">✓</td><td class="y" data-col="ppu">✓</td><td class="y" data-col="fab">✓</td></tr>
+        <tr><td>Deployment pipelines</td><td class="n" data-col="pro">✕</td><td class="y" data-col="ppu">✓</td><td class="y" data-col="fab">✓</td></tr>
+        <tr><td>Fabric Git integration</td><td class="n" data-col="pro">✕*</td><td class="n" data-col="ppu">✕</td><td class="y" data-col="fab">✓</td></tr>
+        <tr><td>Fabric domains</td><td class="n" data-col="pro">✕</td><td class="n" data-col="ppu">✕</td><td class="y" data-col="fab">✓</td></tr>
+        <tr><td>Promote / Certify models</td><td class="y" data-col="pro">✓</td><td class="y" data-col="ppu">✓</td><td class="y" data-col="fab">✓</td></tr>
+        <tr class="star"><td><strong>Distribute to FREE-license viewers</strong></td><td class="n" data-col="pro">✕</td><td class="n" data-col="ppu">✕</td><td class="y" data-col="fab">✓ F64+</td></tr>
+      </table>
+      <div class="callout"><span class="lbl">P3 judgment <span class="tag j">judgment</span></span><span data-j>For a broad internal audience (all of sales), the economics usually tip toward <strong>F64 capacity</strong> once you're past a few dozen Pro consumers — and it's also what unlocks the scale architecture (domains, pipelines, Git).</span> <strong>First question to answer at Kuraray: what's the current tier, and how many consumers?</strong></div>
+      <p style="font-size:.85rem;color:var(--muted)"><span class="mono">*</span> Pro can still use <code>.pbip</code> + an external Git repo for version control (just not Fabric Git). Verify SKU rules at delivery — Microsoft revises them. <a class="ext" href="https://learn.microsoft.com/en-us/fabric/enterprise/powerbi/service-admin-power-bi-licensing" target="_blank" rel="noopener">MS: licensing</a></p>
+    </section>
+
+    <!-- 7 -->
+    <section id="coe">
+      <h2><span class="sn">7</span> The operating function — a "virtual CoE"</h2>
+      <p>You don't need a formal Center of Excellence to do CoE <em>work</em>. Microsoft is explicit: a chartered CoE is <strong>recommended but not required</strong>, and it's <strong>common for a centralized data team to absorb CoE responsibilities</strong> — that's you. Start <strong>centralized</strong>; evolve to <strong>federated</strong> (delegating to domain owners) as the estate grows.</p>
+      <p>Govern <strong>iteratively and lightly</strong> — Microsoft names iterative governance "the best choice for most organizations," and says use the <strong>most lightweight model that meets the objective.</strong> For a 2-person team, that's permission to <em>not</em> over-engineer.</p>
+      <div class="callout"><span class="lbl">Minimal operating cadence <span class="tag j">judgment</span></span><span data-j><strong>Weekly:</strong> triage new content &amp; refresh failures; onboard requests. &nbsp;<strong>Monthly:</strong> review usage metrics &amp; activity log; review certification requests. &nbsp;<strong>Quarterly:</strong> tenant-settings review; re-rate each department on the ladder; capacity health. &nbsp;<strong>Always-on:</strong> a published naming convention, a data-ownership policy, and a "definition of certified."</span></div>
+      <p style="font-size:.85rem;color:var(--muted)"><a class="ext" href="https://learn.microsoft.com/en-us/power-bi/guidance/fabric-adoption-roadmap-center-of-excellence" target="_blank" rel="noopener">MS: Center of Excellence</a> · <a class="ext" href="https://learn.microsoft.com/en-us/power-bi/guidance/fabric-adoption-roadmap-governance" target="_blank" rel="noopener">MS: governance</a></p>
+    </section>
+
+    <!-- 8 -->
+    <section id="playbook">
+      <h2><span class="sn">8</span> Playbook</h2>
+
+      <h3>8a · Naming convention <span class="tag j">judgment</span></h3>
+      <p data-j>Adapt freely — consistency matters more than the exact scheme.</p>
+      <pre>Workspace:    KUR-&lt;Dept&gt;-&lt;Data|Rpt&gt;-&lt;Dev|Prod&gt;    e.g.  KUR-Sales-Data-Prod
+Domain:       &lt;Business Area&gt;                       e.g.  Sales
+Semantic model: &lt;Subject&gt; Model                     e.g.  Sales Performance Model
+App:          &lt;Dept&gt; &lt;Audience&gt;                      e.g.  Sales Leadership
+Security grp: SG-PBI-&lt;Dept&gt;-&lt;Role&gt;                   e.g.  SG-PBI-Sales-Viewers</pre>
+      <p>Decide naming, workspace-creation rights, domains, and governance levels <strong>at the tenant level, early</strong> — they affect everything downstream.</p>
+
+      <h3>8b · Controlling workspace creation at scale</h3>
+      <p>Don't let anyone create workspaces, and don't fully centralize it. Create a security group (e.g., <strong>"Fabric Workspace Creators"</strong>) of trained central <em>and</em> trusted local users, and set the <strong>"Create workspaces"</strong> tenant setting to it. Scope tenant settings to <strong>security groups, not the whole org</strong> — capable teams get more flexibility within your guardrails. <a class="ext" href="https://learn.microsoft.com/en-us/power-bi/guidance/powerbi-implementation-planning-workspaces-tenant-level-planning" target="_blank" rel="noopener">MS: tenant-level workspace planning</a></p>
+
+      <h3>8c · Taking over the orphaned sales reports <span class="tag star">the immediate job</span></h3>
+      <p>Microsoft prescribes a <strong>formal ownership transfer</strong> — and <strong>the new owner refactors and validates before taking full ownership</strong> (especially the hidden data-prep, modeling, and calculations). Click items to check them off:</p>
+      <ul class="check" id="takeover">
+        <li><span class="box"></span><span class="txt"><strong>Inventory &amp; reassign access</strong> — find every report/model/dataflow/gateway the departed user owned; move dataset &amp; gateway ownership to the <em>team / a service principal</em> (not another person, to avoid the next bus-factor gap).</span></li>
+        <li><span class="box"></span><span class="txt"><strong>Refactor &amp; validate</strong> — reverse-engineer undocumented Power Query, RLS/OLS, and DAX; confirm the numbers before putting your name on it.</span></li>
+        <li><span class="box"></span><span class="txt"><strong>Re-platform</strong> — lift into separated data/reporting workspaces; publish the model; convert reports to thin (live-connect) reports.</span></li>
+        <li><span class="box"></span><span class="txt"><strong>Preserve the model interface</strong> — renaming tables/columns/measures/hierarchies, changing a column's data type, changing a measure's return type, or moving a measure's home table all <span class="bad">break dependent visuals</span>. Refactor the inside; keep the surface stable.</span></li>
+        <li><span class="box"></span><span class="txt"><strong>Endorse &amp; document</strong> — Promote (later Certify) the model; write the data dictionary; <strong>assign an owner</strong>.</span></li>
+        <li><span class="box"></span><span class="txt"><strong>Close the gap</strong> — add a <strong>data-ownership policy</strong> (when an asset needs an owner + the owner's duties) so turnover can't orphan content again.</span></li>
+      </ul>
+      <p style="font-size:.85rem;color:var(--muted)"><a class="ext" href="https://learn.microsoft.com/en-us/power-bi/guidance/report-separate-from-model" target="_blank" rel="noopener">MS: report separate from model (breaking changes)</a></p>
+
+      <h3>8d · Monitoring &amp; oversight tooling</h3>
+      <div class="cards">
+        <div class="cardx"><h4>Admin portal</h4><p>Tenant settings, capacity, org-wide controls.</p></div>
+        <div class="cardx"><h4>Usage metrics</h4><p>Per-report consumption — find unused content &amp; top consumers.</p></div>
+        <div class="cardx"><h4>Activity log / audit</h4><p>Who did what; build a tenant-wide audit history.</p></div>
+        <div class="cardx"><h4>Capacity Metrics app</h4><p>Capacity health, throttling, hotspots.</p></div>
+        <div class="cardx"><h4>Chargeback app</h4><p>Attribute capacity cost per department — showback drives optimization &amp; funding decisions.</p></div>
+      </div>
+    </section>
+
+    <!-- 9 -->
+    <section id="sequence">
+      <h2><span class="sn">9</span> Recommended sequence for Kuraray</h2>
+      <ul class="clean">
+        <li><strong>1 · Confirm the licensing tier</strong> (Pro / PPU / Fabric + consumer counts) — gates everything below.</li>
+        <li><strong>2 · Pilot managed self-service on Sales</strong> — separated workspaces, a shared model, thin reports, an App, dev→prod.</li>
+        <li><strong>3 · Take over &amp; stabilize</strong> the orphaned reports (§8c); assign owners; write the data-ownership policy.</li>
+        <li><strong>4 · Publish the standards</strong> (naming, roles, governance levels, "definition of certified") and the maturity ladder; rate each department.</li>
+        <li><strong>5 · Add scale machinery as justified</strong> — pipelines/Git at PPU/capacity; domains + delegated admin + chargeback at Fabric.</li>
+      </ul>
+      <div class="callout key"><span class="lbl">The one thing to remember</span><strong>Own the core. Free the edge. Scale the ceremony to the stakes.</strong> One operating model — managed self-service — applied at the right intensity for each department's size and criticality.</div>
+    </section>
+
+    <!-- 10 -->
+    <section id="sources">
+      <h2><span class="sn">10</span> Sources</h2>
+      <p style="font-size:.9rem;color:var(--muted)">Verified June 2026, primary Microsoft Learn. Items tagged <span class="tag j">judgment</span> throughout are P3 consulting recommendations, not Microsoft mandates.</p>
+      <div class="src-list">
+        <div>Content ownership &amp; management — managed self-service, ownership transfer</div>
+        <div>Center of Excellence — structures, "recommended not required"</div>
+        <div>Fabric adoption roadmap — maturity levels (100–500)</div>
+        <div>Governance — iterative/lightweight, data-ownership policy</div>
+        <div>Workspace-level planning — data/reporting split, roles, two-stage minimum</div>
+        <div>Tenant-level workspace planning — domains, governance levels, workspace creation</div>
+        <div>Tenant administration — settings scoped to security groups</div>
+        <div>Content lifecycle (deploy) — one-direction deployment, pipelines, <code>.pbip</code></div>
+        <div>Fabric domains — data mesh, three-tier delegated admin, federated governance</div>
+        <div>Capacity-planning governance &amp; chargeback</div>
+        <div>Report separate from model — breaking changes</div>
+        <div>Build permission — not a security boundary</div>
+        <div>Power BI licensing — Pro / PPU / Fabric capacity</div>
+      </div>
+      <div class="callout"><span class="lbl">Note on practitioner sources</span>The research deliberately sought Reddit / community contrast (r/PowerBI, SQLBI, Chris Webb, Data Goblins, RADACAD). Those informed the framing, but the <strong>verified</strong> recommendations rest on primary Microsoft documentation. The "adopt as you grow / skip while small" guidance is <strong>P3 judgment derived from the maturity ladder</strong>, not an observed practitioner survey.</div>
+    </section>
+  </main>
+</div>
+
+<footer>P3 Adaptive · Kuraray America GoPlant Helpdesk · Power BI Architecture &amp; Governance Reference Guide · 2026-06-03</footer>
+
+<script>
+// progress bar
+const prog=document.getElementById('progress');
+addEventListener('scroll',()=>{const h=document.documentElement;const sc=h.scrollTop/(h.scrollHeight-h.clientHeight);prog.style.width=(sc*100)+'%';},{passive:true});
+
+// scroll-spy
+const links=[...document.querySelectorAll('nav.toc a')];
+const map={};links.forEach(a=>map[a.getAttribute('href').slice(1)]=a);
+const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.remove('active'));map[e.target.id]&&map[e.target.id].classList.add('active');}});},{rootMargin:'-40% 0px -55% 0px'});
+document.querySelectorAll('section').forEach(s=>obs.observe(s));
+
+// mobile menu
+const toc=document.getElementById('toc'),mb=document.getElementById('menuBtn');
+mb.addEventListener('click',()=>toc.classList.toggle('open'));
+links.forEach(a=>a.addEventListener('click',()=>toc.classList.remove('open')));
+
+// judgment highlight toggle
+document.getElementById('jToggle').addEventListener('click',function(){document.body.classList.toggle('show-j');this.style.background=document.body.classList.contains('show-j')?'var(--accent)':'';this.style.color=document.body.classList.contains('show-j')?'#fff':'';});
+
+// maturity self-assessment
+const qs=['q1','q2','q3','q4','q5'].map(id=>document.getElementById(id));
+const matData={
+  100:['Initial','Ad-hoc and personal. Get it into a shared workspace with scheduled refresh next.'],
+  200:['Repeatable','In a workspace with reuse. Next: separate the data into a shared semantic model and build thin reports.'],
+  300:['Defined','The target for departments that matter — separated workspaces, shared model, App distribution, documented ownership, dev→prod. Solid resting place.'],
+  400:['Capable','Certified models, pipelines, source control, domains, monitored usage. Strong — only push to 500 if the volume justifies it.'],
+  500:['Efficient','Self-sustaining and automated. Maintain, don’t over-invest elsewhere.']
+};
+const ladderRungs=[...document.querySelectorAll('#ladder .rung')];
+function assess(){
+  let n=0;for(const q of qs){if(q&&q.checked)n++;else break;} // consecutive (maturity is cumulative)
+  const lvl=[100,200,300,400,500][n];
+  const [name,txt]=matData[lvl];
+  document.getElementById('matResult').innerHTML='<div class="rlvl">Level <span class="num">'+lvl+'</span> · '+name+'</div><div class="rtext">'+txt+'</div>';
+  ladderRungs.forEach(r=>r.classList.toggle('lit',+r.dataset.lvl===lvl));
+}
+qs.forEach(q=>q&&q.addEventListener('change',assess));
+
+// licensing tier selector
+const tierMsgs={
+  pro:'Pro-only: you get the important part — separated workspaces, shared models, thin reports, Apps, Promoted endorsement, and .pbip + external Git. But every consumer needs a Pro seat, and you run a manual dev→prod split (no pipelines, no domains).',
+  ppu:'PPU adds deployment pipelines — but PPU content can only be shared with other PPU users, so it is an author/development tier, not a broad-distribution tier.',
+  fab:'Fabric F-capacity (F64+) is the threshold that lets FREE-license users consume — huge for a broad sales audience — and unlocks deployment pipelines, Fabric Git, and domains. This is the scale tier.'
+};
+function setTier(t){
+  document.querySelectorAll('.tierbtn').forEach(b=>b.classList.toggle('on',b.dataset.tier===t));
+  document.querySelectorAll('#licTable [data-col]').forEach(c=>c.classList.toggle('col-hi',c.dataset.col===t));
+  document.getElementById('tiermsg').textContent=tierMsgs[t];
+}
+document.querySelectorAll('.tierbtn').forEach(b=>b.addEventListener('click',()=>setTier(b.dataset.tier)));
+setTier('pro');
+
+// takeover checklist
+document.querySelectorAll('#takeover li').forEach(li=>li.addEventListener('click',()=>li.classList.toggle('done')));
+</script>
+</body>
+</html>

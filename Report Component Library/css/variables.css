@@ -1,0 +1,40 @@
+:root {
+  /* Shared JW Consulting brand tokens */
+  --ink: #111111;
+  --ink-soft: #333333;
+  --accent: #8a8a8a;
+  --background: #f7f7f7;
+  --surface: #ffffff;
+  --muted: #686868;
+  --line: #dedede;
+  --soft: #f1f1f1;
+  --radius: 0;
+
+  /* Backward-compatible names used by the report components */
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-brand: var(--ink);
+  --color-brand-deep: #000000;
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--soft);
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--soft);
+  --color-text: var(--ink-soft);
+  --color-muted: var(--muted);
+  --border-color: var(--line);
+
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --shadow-sm: none;
+  --shadow-md: none;
+
+  --space-xs: 6px;
+  --space-sm: 12px;
+  --space-md: 20px;
+  --space-lg: 32px;
+  --space-xl: 64px;
+  --space-2xl: 96px;
+  --font-family: "Courier New", monospace;
+}
