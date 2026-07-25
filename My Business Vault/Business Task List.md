@@ -8,6 +8,7 @@ kanban-plugin: board
 
 - [ ] Update component card names in component library. Give each type of card it's own id so styling can be adjusted accordingly.
 - [ ] Apply for LLC
+- [ ] Set-up business mailbox
 
 
 ## Complete

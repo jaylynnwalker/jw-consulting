@@ -6,3 +6,5 @@
 - [ ] **Phase 3:** Create your brand (name, logo, website, LinkedIn, business cards).
 - [ ] **Phase 4:** Start outreach and networking.
 - [ ] **Phase 5:** Land your first pilot client.
+
+www.jw-consults.com
